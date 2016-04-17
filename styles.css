@@ -1,0 +1,13 @@
+.container{
+  width: 100px;
+  padding: 1px;
+}
+.down{
+  float: left;
+}
+.up{
+  float: right;
+}
+.val{
+
+}
