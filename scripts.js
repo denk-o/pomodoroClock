@@ -1,4 +1,4 @@
-var break_count = 5;//Just some arbitrary initial values
+var break_count = 5;//Just some arbitrary initial values in minutes
 var session_count = 25;
 
 function CountDownTimer(duration, granularity) {
@@ -52,12 +52,19 @@ CountDownTimer.parse = function(seconds) {
   };
 };
 
+function updateFields(){
+  $("#break_count").html(break_count);
+  $("#session_count").html(session_count);
+}
+
+function tick(minutes, seconds){
+  minutes = minutes <10 ? "0" + minutes : minutes;
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+  $(".time").html(minutes + ':' + seconds);
+}
+//Document starts here
 
 $(document).ready(function(){
-  function updateFields(){
-    $("#break_count").html(break_count);
-    $("#session_count").html(session_count);
-  }
 
   $(".down").on("click",function(){
     if($(this).parents('.break_time').length){
@@ -85,5 +92,19 @@ $(document).ready(function(){
     updateFields();
   });
 
+
+
   updateFields();
+
+  var session_timer = new CountDownTimer(session_count*60);
+  var session_timerObj = CountDownTimer.parse(session_count*60);
+
+
+  tick(session_timerObj.minutes, session_timerObj.seconds);
+  session_timer.onTick(tick);
+
+  $("#controller").on("click", function(){
+    session_timer.start();
+  });
+
 });
