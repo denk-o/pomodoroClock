@@ -1,5 +1,6 @@
 var break_count = 5;//Just some arbitrary initial values in minutes
 var session_count = 25;
+var is_session=true;//switch to false if not session
 
 function CountDownTimer(duration, granularity) {
   this.duration = duration;
@@ -52,15 +53,32 @@ CountDownTimer.parse = function(seconds) {
   };
 };
 
-function updateFields(){
+function updateFields(){//restricted only to updating button fields
   $("#break_count").html(break_count);
   $("#session_count").html(session_count);
 }
 
-function tick(minutes, seconds){
+function updateTimerField(){//update the timerfield before starting
+  var minutes = session_count;
+  var seconds = 0;
   minutes = minutes <10 ? "0" + minutes : minutes;
   seconds = seconds < 10 ? "0" + seconds : seconds;
   $(".time").html(minutes + ':' + seconds);
+}
+
+function checkTimer(timer){
+  //check if we need to switch from break to session or vice versa
+  if(timer.expired()){
+    //if the timer is expired we must switch
+    is_session= !is_session;//switch to oppoosite
+  }
+}
+
+function tick(minutes, seconds, timer){
+  minutes = minutes <10 ? "0" + minutes : minutes;
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+  $(".time").html(minutes + ':' + seconds);
+  checkTimer(timer);
 }
 //Document starts here
 
@@ -75,6 +93,7 @@ $(document).ready(function(){
     else if($(this).parents('.session_time').length){
       if(session_count>1){
         session_count=session_count-1;
+        updateTimerField();
       }
     }
 
@@ -87,6 +106,7 @@ $(document).ready(function(){
     }
     else if($(this).parents('.session_time').length){
       session_count=session_count+1;
+      updateTimerField();
     }
 
     updateFields();
@@ -100,7 +120,7 @@ $(document).ready(function(){
   var session_timerObj = CountDownTimer.parse(session_count*60);
 
 
-  tick(session_timerObj.minutes, session_timerObj.seconds);
+  tick(session_timerObj.minutes, session_timerObj.seconds,session_timer);
   session_timer.onTick(tick);
 
   $("#controller").on("click", function(){
