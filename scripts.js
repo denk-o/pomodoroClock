@@ -70,7 +70,9 @@ function checkTimer(timer){
   //check if we need to switch from break to session or vice versa
   if(timer.expired()){
     //if the timer is expired we must switch
-    is_session= !is_session;//switch to oppoosite
+    alert(timer.running);
+    var opp = !is_session;
+    is_session = opp;//switch to oppoosite
   }
 }
 
