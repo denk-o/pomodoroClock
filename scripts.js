@@ -1,132 +1,161 @@
-var break_count = 5;//Just some arbitrary initial values in minutes
-var session_count = 25;
-var is_session=true;//switch to false if not session
+$workT = $('#work-time');
+$breakT = $('#break-time');
+$status = $('#status');
 
-function CountDownTimer(duration, granularity) {
-  this.duration = duration;
-  this.granularity = granularity || 1000;
-  this.tickFtns = [];
-  this.running = false;
+$('#progress').waterbubble(
+
+  {
+
+    // bubble size
+    radius: 100,
+
+    // border width
+    lineWidth: undefined,
+
+    // data to present
+    data: 0.0,
+
+    // color of the water bubble
+    waterColor: 'rgba(25, 139, 201, 1)',
+
+    // text color
+    textColor: 'rgba(06, 85, 128, 0.8)',
+
+    // custom font family
+    font: '',
+
+    // show wave
+    wave: true,
+
+    // custom text displayed inside the water bubble
+    txt: undefined,
+
+    // enable water fill animation
+    animation: false,
+
+  });
+
+// Controls for Break Length
+$('#minus').click(function() {
+  $status.text('Break!');
+  if (+$breakT.text() > 1) {
+    $breakT.text(+$breakT.text() - 1);
+  }
+});
+
+$('#plus').click(function() {
+  $status.text('Break!');
+  $breakT.text(+$breakT.text() + 1);
+});
+
+// Controls for Session Length
+$('#minus2').click(function() {
+  $status.text('Work!');
+  if (+$workT.text() > 1) {
+    $workT.text(+$workT.text() - 1);
+  }
+});
+
+$('#plus2').click(function() {
+  $status.text('Work!');
+  $workT.text(+$workT.text() + 1);
+});
+
+function pad(val) {
+  return ('00' + val).slice(-2);
 }
 
-CountDownTimer.prototype.start = function() {
-  if (this.running) {
+var el = document.getElementById('timer');
+
+function updateDisplay(t) {
+  var hours = Math.floor(t / 3600);
+  t -= hours * 3600;
+  var minutes = Math.floor(t / 60);
+  t -= minutes * 60;
+  var seconds = Math.floor(t);
+  el.innerHTML = pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+}
+
+time = 0;
+updateDisplay(time);
+var running = true;
+var tlast = (new Date()).getTime();
+
+function update() {
+  if (time <= 0.0) { // Already done
     return;
   }
-  this.running = true;
-  var start = Date.now(),
-      that = this,
-      diff, obj;
 
-  (function timer() {
-    diff = that.duration - (((Date.now() - start) / 1000) | 0);
-
-    if (diff > 0) {
-      setTimeout(timer, that.granularity);
-    } else {
-      diff = 0;
-      that.running = false;
-    }
-
-    obj = CountDownTimer.parse(diff);
-    that.tickFtns.forEach(function(ftn) {
-      ftn.call(this, obj.minutes, obj.seconds);
-    }, that);
-  }());
-};
-
-CountDownTimer.prototype.onTick = function(ftn) {
-  if (typeof ftn === 'function') {
-    this.tickFtns.push(ftn);
+  var tnow = (new Date()).getTime();
+  var dt = (tnow - tlast) / 1000.0;
+  tlast = tnow;
+  time -= dt;
+  if ($status.text() === 'Work!') {
+    totalTime = ($workT.text() * 60);
+    water = 'rgba(25, 139, 201, 1)';
   }
-  return this;
-};
 
-CountDownTimer.prototype.expired = function() {
-  return !this.running;
-};
-
-CountDownTimer.parse = function(seconds) {
-  return {
-    'minutes': (seconds / 60) | 0,
-    'seconds': (seconds % 60) | 0
-  };
-};
-
-function updateFields(){//restricted only to updating button fields
-  $("#break_count").html(break_count);
-  $("#session_count").html(session_count);
-}
-
-function updateTimerField(){//update the timerfield before starting
-  var minutes = session_count;
-  var seconds = 0;
-  minutes = minutes <10 ? "0" + minutes : minutes;
-  seconds = seconds < 10 ? "0" + seconds : seconds;
-  $(".time").html(minutes + ':' + seconds);
-}
-
-function checkTimer(timer){
-  //check if we need to switch from break to session or vice versa
-  if(timer.expired()){
-    //if the timer is expired we must switch
-    alert(timer.running);
-    var opp = !is_session;
-    is_session = opp;//switch to oppoosite
+  if ($status.text() === 'Break!') {
+    totalTime = ($breakT.text() * 60);
+    water = 'rgba(255, 0, 0, 1)';
   }
+  fraction = 1 - (time / totalTime);
+  $('#progress').waterbubble({
+  data: fraction,
+  animation: false,
+  waterColor: water,
+  });
+  if (time <= 0.0) {
+  if ($status.text() === 'Work!') {
+    $status.text('Break!');
+    time = $breakT.text() * 60;
+
+  } else {
+    $status.text('Work!');
+    time = $workT.text() * 60;
+
+    }
+  }
+  updateDisplay(time);
+ if (running) {
+   requestAnimationFrame(update);
+ }
+
 }
 
-function tick(minutes, seconds, timer){
-  minutes = minutes <10 ? "0" + minutes : minutes;
-  seconds = seconds < 10 ? "0" + seconds : seconds;
-  $(".time").html(minutes + ':' + seconds);
-  checkTimer(timer);
+function run() {
+  $status.text('Work!');
+  if (time <= 0.0) {
+    time = $workT.text() * 60;
+  }
+
+  tlast = (new Date()).getTime();
+  running = true;
+  requestAnimationFrame(update);
 }
-//Document starts here
 
-$(document).ready(function(){
+function pause() {
+  running = false;
+}
 
-  $(".down").on("click",function(){
-    if($(this).parents('.break_time').length){
-      if(break_count>1){
-        break_count=break_count-1;
-      }
-    }
-    else if($(this).parents('.session_time').length){
-      if(session_count>1){
-        session_count=session_count-1;
-        updateTimerField();
-      }
-    }
-
-    updateFields();
+function stop() {
+  running = false;
+  time = 0;
+  el.innerHTML = '00:00:00';
+  $status.text('Work!');
+  $workT.text(25);
+  $breakT.text(5);
+  $('#progress').waterbubble({
+    data: 0.0,
+    animation: false,
+    waterColor: 'rgba(25, 139, 201, 1)',
   });
+}
 
-  $(".up").on("click",function(){
-    if($(this).parents('.break_time').length){
-      break_count=break_count+1;
-    }
-    else if($(this).parents('.session_time').length){
-      session_count=session_count+1;
-      updateTimerField();
-    }
+var bStart = document.getElementById('start');
+var bPause = document.getElementById('pause');
+var bReset = document.getElementById('reset');
 
-    updateFields();
-  });
-
-
-
-  updateFields();
-
-  var session_timer = new CountDownTimer(session_count*60);
-  var session_timerObj = CountDownTimer.parse(session_count*60);
-
-
-  tick(session_timerObj.minutes, session_timerObj.seconds,session_timer);
-  session_timer.onTick(tick);
-
-  $("#controller").on("click", function(){
-    session_timer.start();
-  });
-
-});
+bStart.onclick = run;
+bPause.onclick = pause;
+bReset.onclick = stop;
